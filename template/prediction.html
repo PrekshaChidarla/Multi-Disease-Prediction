@@ -1,0 +1,172 @@
+{% extends 'Base.html' %}
+{% load static %}
+{% block main %}
+
+<style>
+    /* ... [Keep your previous styles as is] ... */
+
+    .result-box {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: #ffffff;
+        color: #000; /* Black text */
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        max-width: 500px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .metrics-table {
+        width: 340px;
+        margin: 30px auto;
+        background: rgba(255,255,255,0.95);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        color: #000 !important; /* force black color */
+    }
+
+    .metrics-table th {
+        background: #63a8bd;
+        color: white;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .metrics-table td {
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+        color: #000; /* black text */
+        text-align: left;
+    }
+
+    /* Scanner animation container */
+    .prediction {
+        position: relative;
+        display: inline-block;
+    }
+
+    /* Scanner overlay */
+    .scanner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none; /* so it doesn't block interactions */
+        overflow: hidden;
+        border-radius: 10px;
+    }
+
+    .scanner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        background: linear-gradient(
+            180deg,
+            rgba(99,168,189,0) 0%,
+            rgba(99,168,189,0.4) 50%,
+            rgba(99,168,189,0) 100%
+        );
+        animation: scan 3s linear infinite;
+        filter: drop-shadow(0 0 8px #63a8bd);
+    }
+
+    @keyframes scan {
+        0% {
+            top: -50%;
+        }
+        100% {
+            top: 100%;
+        }
+    }
+</style>
+
+<div class="inFormBackground">
+    <div class="circle"></div>
+    <div class="circle"></div>
+
+    {% if algorithm %}
+    <h1>{{ algorithm }}</h1>
+    <table class="metrics-table">
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if accuracy %}
+            <tr><td>Accuracy</td><td>{{ accuracy }}%</td></tr>
+            {% endif %}
+            {% if precision %}
+            <tr><td>Precision</td><td>{{ precision }}%</td></tr>
+            {% endif %}
+            {% if recall %}
+            <tr><td>Recall</td><td>{{ recall }}%</td></tr>
+            {% endif %}
+            {% if f1_score %}
+            <tr><td>F1 Score</td><td>{{ f1_score }}%</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if test %}
+    <div class="uploadForm">
+        {% if messages %}
+            {% for message in messages %}
+                <p style="color:yellow;">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+        <form action="{% url 'prediction' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="file">Select Test Image</label>
+            <input type="file" id="file" name="file" accept="image/*" required>
+            <button type="submit" class="submitForm">Predict</button>
+        </form>
+        <div class="image-preview" id="preview-container" style="display:none;">
+            <img id="preview" src="#" alt="Preview">
+            <div class="scanner"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if predicted_class %}
+    <div class="result-box">
+        Predicted Class: <span style="color:#63a8bd;">{{ predicted_class }}</span>
+    </div>
+    {% endif %}
+
+    {% if predict %}
+    <div class="prediction mt-4 text-center" style="position: relative; display: inline-block;">
+        <img style="width:400px; border-radius:10px;" src="{% static 'images/output.png' %}" alt="Prediction Output">
+        <div class="scanner"></div>
+    </div>
+    {% endif %}
+
+    {% if upload %}
+    <div class="mt-4 p-4 bg-white text-dark rounded shadow" style="max-width: 500px;">
+        <p><strong>Loaded Dataset Categories:</strong></p>
+        <p>{{ upload }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.getElementById('file')?.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const previewContainer = document.getElementById('preview-container');
+            const preview = document.getElementById('preview');
+            preview.src = URL.createObjectURL(file);
+            previewContainer.style.display = 'block';
+        }
+    });
+</script>
+
+{% endblock %}
